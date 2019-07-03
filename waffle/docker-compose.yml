@@ -1,0 +1,57 @@
+version: '3.6'
+
+services:
+  web:
+    image: timesecommerce/waffle:${TAG:-latest}
+    environment:
+      - CONTAINER_ROLE=web
+    configs:
+      - source: waffle-testing-env
+        target: /storage/web/.env
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.tags=traefik-public"
+        - "traefik.docker.network=traefik-public"
+        - "traefik.port=80"
+        - "traefik.frontend.rule=Host:${DOMAIN?Domain not set}"
+        # Traefik service that listens to HTTP
+        - traefik.redirectorservice.frontend.entryPoints=http
+        - traefik.redirectorservice.frontend.redirect.entryPoint=https
+        # Traefik service that listens to HTTPS
+        - traefik.webservice.frontend.entryPoints=https
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+    networks:
+      - traefik-public
+  queue:
+    image: timesecommerce/waffle:${TAG:-latest}
+    environment:
+      - CONTAINER_ROLE=queue
+    configs:
+      - source: waffle-testing-env
+        target: /storage/web/.env
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+  scheduler:
+    image: timesecommerce/waffle:${TAG:-latest}
+    environment:
+      - CONTAINER_ROLE=scheduler
+    configs:
+      - source: waffle-testing-env
+        target: /storage/web/.env
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+configs:
+  waffle-testing-env:
+    name: waffle-testing-env-2
+    file: waffle-testing-env
+    external: true
+networks:
+  traefik-public:
+    external: true
