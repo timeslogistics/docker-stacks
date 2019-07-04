@@ -5,7 +5,7 @@ services:
     image: timesecommerce/waffle:${TAG:-latest}
     command: web
     configs:
-      - source: waffle-env
+      - source: env
         target: /storage/web/.env
     deploy:
       labels:
@@ -32,7 +32,7 @@ services:
     image: timesecommerce/waffle:${TAG:-latest}
     command: queue default,upload,report
     configs:
-      - source: waffle-env
+      - source: env
         target: /storage/web/.env
     deploy:
       restart_policy:
@@ -46,7 +46,7 @@ services:
     image: timesecommerce/waffle:${TAG:-latest}
     command: scheduler
     configs:
-      - source: waffle-env
+      - source: env
         target: /storage/web/.env
     deploy:
       restart_policy:
@@ -54,9 +54,9 @@ services:
         delay: 5s
       replicas: 1
 configs:
-  waffle-env:
-    name: waffle-default-env
-    file: waffle-env
+  env:
+    name: ${ENV_CONFIG:-waffle-default-env}
+    file: env
     external: true
 networks:
   traefik-public:
