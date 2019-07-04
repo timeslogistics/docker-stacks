@@ -3,8 +3,7 @@ version: '3.6'
 services:
   web:
     image: timesecommerce/waffle:${TAG:-latest}
-    environment:
-      - CONTAINER_ROLE=web
+    command: web
     configs:
       - source: waffle-testing-env
         target: /storage/web/.env
@@ -23,12 +22,15 @@ services:
       restart_policy:
         condition: on-failure
         delay: 5s
+      replicas: ${WEB_REPLICAS:-1}
+      placement:
+        preferences:
+          - spread: node.id
     networks:
       - traefik-public
   queue:
     image: timesecommerce/waffle:${TAG:-latest}
-    environment:
-      - CONTAINER_ROLE=queue
+    command: queue default,upload,report
     configs:
       - source: waffle-testing-env
         target: /storage/web/.env
@@ -36,10 +38,13 @@ services:
       restart_policy:
         condition: on-failure
         delay: 5s
+      replicas: ${QUEUE_REPLICAS:-3}
+      placement:
+        preferences:
+          - spread: node.id
   scheduler:
     image: timesecommerce/waffle:${TAG:-latest}
-    environment:
-      - CONTAINER_ROLE=scheduler
+    command: scheduler
     configs:
       - source: waffle-testing-env
         target: /storage/web/.env
@@ -47,9 +52,10 @@ services:
       restart_policy:
         condition: on-failure
         delay: 5s
+      replicas: 1
 configs:
   waffle-testing-env:
-    name: waffle-testing-env-2
+    name: waffle-testing-env-tagt-719
     file: waffle-testing-env
     external: true
 networks:
