@@ -52,7 +52,7 @@ services:
       restart_policy:
         condition: on-failure
         delay: 5s
-      replicas: 1
+      replicas: ${SCHEDULER_REPLICAS:-1}
 configs:
   env:
     name: ${ENV_CONFIG:-epod-default-env}
