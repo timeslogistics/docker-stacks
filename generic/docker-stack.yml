@@ -1,0 +1,63 @@
+version: '3.6'
+
+services:
+  web:
+    image: ${IMAGE:?IMAGE not specified}:${TAG:-latest}
+    command: web
+    configs:
+      - source: env
+        target: /storage/web/.env
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.tags=traefik-public"
+        - "traefik.docker.network=traefik-public"
+        - "traefik.port=80"
+        - "traefik.frontend.rule=Host:${DOMAIN?Domain not set}"
+        # Traefik service that listens to HTTP
+        - traefik.redirectorservice.frontend.entryPoints=http
+        - traefik.redirectorservice.frontend.redirect.entryPoint=https
+        # Traefik service that listens to HTTPS
+        - traefik.webservice.frontend.entryPoints=https
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+      replicas: ${WEB_REPLICAS:-1}
+      placement:
+        preferences:
+          - spread: node.id
+    networks:
+      - traefik-public
+  queue:
+    image: ${IMAGE:?IMAGE not specified}:${TAG:-latest}
+    command: queue ${QUEUE:?-default}
+    configs:
+      - source: env
+        target: /storage/web/.env
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+      replicas: ${QUEUE_REPLICAS:-3}
+      placement:
+        preferences:
+          - spread: node.id
+  scheduler:
+    image: ${IMAGE:?IMAGE not specified}:${TAG:-latest}
+    command: scheduler
+    configs:
+      - source: env
+        target: /storage/web/.env
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+      replicas: ${SCHEDULER_REPLICAS:-1}
+configs:
+  env:
+    name: ${ENV_CONFIG:?ENV_CONFIG not specified}
+    file: env
+    external: true
+networks:
+  traefik-public:
+    external: true
